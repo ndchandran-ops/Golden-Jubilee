@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carpet Area Measurement Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            background: #e8eaf6;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8eaf6;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .canvas-container {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+            display: none;
+            flex-direction: column;
+        }
+
+        .canvas-container.active {
+            display: flex;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            background: white;
+            cursor: crosshair;
+            flex: 1;
+        }
+
+        .canvas-controls {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 2px solid #ddd;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .measurement-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .rooms-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .room-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-info {
+            flex: 1;
+        }
+
+        .room-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .room-dimensions {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .room-area {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-left: 15px;
+        }
+
+        .btn-remove {
+            background: #ff6b6b;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .btn-remove:hover {
+            background: #ee5a52;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .summary h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .total-area {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .instructions {
+            background: #e8eaf6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Carpet Area Measurement Tool</h1>
+            <p>Measure floor plan carpet area precisely</p>
+        </div>
+
+        <div class="content">
+            <!-- Left Section: Upload & Canvas -->
+            <div class="section">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('upload')">Upload PDF</button>
+                    <button class="tab-btn" onclick="switchTab('manual')">Manual Input</button>
+                </div>
+
+                <!-- Upload Tab -->
+                <div id="upload" class="tab-content active">
+                    <div class="instructions">
+                        <h3>📋 How to use:</h3>
+                        <ol>
+                            <li>Upload your floor plan PDF/Image</li>
+                            <li>Define scale (pixels = actual meters)</li>
+                            <li>Click corners of rooms to measure</li>
+                            <li>View calculated carpet area</li>
+                        </ol>
+                    </div>
+
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">📄</div>
+                        <p><strong>Click to upload</strong> or drag & drop</p>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px;">PDF, JPG, PNG supported</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif">
+
+                    <div class="error-message" id="errorMsg"></div>
+                    <div class="success-message" id="successMsg"></div>
+
+                    <!-- Canvas for viewing -->
+                    <div class="canvas-container" id="canvasContainer">
+                        <canvas id="canvas"></canvas>
+                        <div class="canvas-controls">
+                            <input type="number" id="scalePixels" class="measurement-input" placeholder="Pixels (scale reference)" min="1">
+                            <input type="number" id="scaleMeters" class="measurement-input" placeholder="Meters (actual distance)" min="0.1" step="0.1" value="1">
+                            <button class="btn btn-primary" onclick="setScale()">Set Scale</button>
+                            <button class="btn btn-secondary" onclick="resetCanvas()">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Input Tab -->
+                <div id="manual" class="tab-content">
+                    <div class="instructions">
+                        <h3>📝 Manual Measurement:</h3>
+                        <p>Enter room dimensions manually to calculate carpet area</p>
+                    </div>
+
+                    <div style="display: grid; gap: 10px;">
+                        <input type="text" id="roomName" class="measurement-input" placeholder="Room name (e.g., Bedroom 1)">
+                        <input type="number" id="roomLength" class="measurement-input" placeholder="Length (meters)" min="0.1" step="0.1">
+                        <input type="number" id="roomWidth" class="measurement-input" placeholder="Width (meters)" min="0.1" step="0.1">
+                        <button class="btn btn-primary" onclick="addRoomManual()">Add Room</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section: Results -->
+            <div class="section">
+                <h2>📊 Rooms & Results</h2>
+                <div class="rooms-list" id="roomsList">
+                    <p style="color: #999; text-align: center;">No rooms added yet</p>
+                </div>
+
+                <button class="btn btn-secondary" onclick="exportResults()" id="exportBtn" style="display: none;">📥 Export Results</button>
+                <button class="btn btn-secondary" onclick="clearAllRooms()" id="clearBtn" style="display: none;">🗑️ Clear All</button>
+
+                <div class="summary" id="summary" style="display: none;">
+                    <h3>Total Carpet Area</h3>
+                    <div class="total-area" id="totalArea">0.00 sq.m</div>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-label">Number of Rooms</div>
+                            <div class="stat-value" id="roomCount">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Average Room Size</div>
+                            <div class="stat-value" id="avgRoomSize">0.00 sq.m</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rooms = [];
+        let canvas, ctx;
+        let currentImage = null;
+        let scaleSet = false;
+        let isDrawing = false;
+        let measurements = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFileUpload(e.dataTransfer.files[0]);
+            });
+
+            // File input
+            fileInput.addEventListener('change', (e) => {
+                handleFileUpload(e.target.files[0]);
+            });
+
+            // Canvas click for measurements
+            canvas.addEventListener('click', handleCanvasClick);
+        }
+
+        function handleFileUpload(file) {
+            if (!file) return;
+
+            if (file.type === 'application/pdf') {
+                handlePDF(file);
+            } else if (file.type.startsWith('image/')) {
+                handleImage(file);
+            } else {
+                showError('❌ Unsupported file type. Please upload PDF or image.');
+            }
+        }
+
+        function handlePDF(file) {
+            // Note: For full PDF support, you'd need pdf.js library
+            // This is a simplified version that handles images
+            showError('⚠️ PDF support requires additional setup. Please convert to image (PNG/JPG) first, or use manual measurement.');
+        }
+
+        function handleImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    currentImage = img;
+                    displayImage();
+                    document.getElementById('canvasContainer').classList.add('active');
+                    showSuccess('✅ Image loaded successfully!');
+                    resetMeasurements();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayImage() {
+            const maxWidth = canvas.parentElement.offsetWidth - 20;
+            const maxHeight = 400;
+
+            let width = currentImage.width;
+            let height = currentImage.height;
+
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+
+            if (height > maxHeight) {
+                width = (maxHeight / height) * width;
+                height = maxHeight;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(currentImage, 0, 0, width, height);
+        }
+
+        function setScale() {
+            const pixels = parseFloat(document.getElementById('scalePixels').value);
+            const meters = parseFloat(document.getElementById('scaleMeters').value);
+
+            if (!pixels || !meters) {
+                showError('❌ Please enter both scale values');
+                return;
+            }
+
+            scaleSet = true;
+            showSuccess(`✅ Scale set: ${pixels} pixels = ${meters} meter(s)`);
+        }
+
+        function handleCanvasClick(event) {
+            if (!scaleSet || !currentImage) {
+                showError('❌ Please set scale first');
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            measurements.push({ x, y });
+
+            // Draw point
+            ctx.fillStyle = '#667eea';
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (measurements.length >= 2) {
+                // Calculate distance
+                const dx = measurements[1].x - measurements[0].x;
+                const dy = measurements[1].y - measurements[0].y;
+                const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+
+                const scalePixels = parseFloat(document.getElementById('scalePixels').value);
+                const scaleMeters = parseFloat(document.getElementById('scaleMeters').value);
+                const metersPerPixel = scaleMeters / scalePixels;
+                const actualDistance = pixelDistance * metersPerPixel;
+
+                const roomName = prompt(`Room name (Distance: ${actualDistance.toFixed(2)}m):`);
+                if (roomName) {
+                    // For now, treat this as one dimension
+                    const length = actualDistance;
+                    const width = parseFloat(prompt('Width (meters):'));
+
+                    if (width && !isNaN(width)) {
+                        addRoom(roomName, length, width);
+                    }
+                }
+
+                resetMeasurements();
+                displayImage();
+            }
+        }
+
+        function resetMeasurements() {
+            measurements = [];
+            if (currentImage) {
+                displayImage();
+            }
+        }
+
+        function resetCanvas() {
+            currentImage = null;
+            canvas.width = 0;
+            canvas.height = 0;
+            scaleSet = false;
+            resetMeasurements();
+            document.getElementById('canvasContainer').classList.remove('active');
+            document.getElementById('fileInput').value = '';
+            showSuccess('✅ Canvas reset');
+        }
+
+        function addRoomManual() {
+            const name = document.getElementById('roomName').value.trim();
+            const length = parseFloat(document.getElementById('roomLength').value);
+            const width = parseFloat(document.getElementById('roomWidth').value);
+
+            if (!name || !length || !width) {
+                showError('❌ Please fill all fields');
+                return;
+            }
+
+            addRoom(name, length, width);
+
+            document.getElementById('roomName').value = '';
+            document.getElementById('roomLength').value = '';
+            document.getElementById('roomWidth').value = '';
+            document.getElementById('roomName').focus();
+        }
+
+        function addRoom(name, length, width) {
+            const area = (length * width).toFixed(2);
+            rooms.push({ name, length: length.toFixed(2), width: width.toFixed(2), area });
+            renderRooms();
+            showSuccess(`✅ Added ${name}: ${area} sq.m`);
+        }
+
+        function removeRoom(index) {
+            rooms.splice(index, 1);
+            renderRooms();
+        }
+
+        function renderRooms() {
+            const roomsList = document.getElementById('roomsList');
+            const summary = document.getElementById('summary');
+
+            if (rooms.length === 0) {
+                roomsList.innerHTML = '<p style="color: #999; text-align: center;">No rooms added yet</p>';
+                summary.style.display = 'none';
+                document.getElementById('exportBtn').style.display = 'none';
+                document.getElementById('clearBtn').style.display = 'none';
+                return;
+            }
+
+            roomsList.innerHTML = rooms.map((room, index) => `
+                <div class="room-item">
+                    <div class="room-info">
+                        <div class="room-name">${room.name}</div>
+                        <div class="room-dimensions">${room.length}m × ${room.width}m</div>
+                    </div>
+                    <div class="room-area">${room.area}</div>
+                    <button class="btn-remove" onclick="removeRoom(${index})">Remove</button>
+                </div>
+            `).join('');
+
+            // Update summary
+            const totalArea = rooms.reduce((sum, room) => sum + parseFloat(room.area), 0).toFixed(2);
+            const avgArea = (totalArea / rooms.length).toFixed(2);
+
+            document.getElementById('totalArea').textContent = totalArea + ' sq.m';
+            document.getElementById('roomCount').textContent = rooms.length;
+            document.getElementById('avgRoomSize').textContent = avgArea + ' sq.m';
+
+            summary.style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'inline-block';
+            document.getElementById('clearBtn').style.display = 'inline-block';
+        }
+
+        function clearAllRooms() {
+            if (confirm('Clear all rooms?')) {
+                rooms = [];
+                renderRooms();
+                showSuccess('✅ All rooms cleared');
+            }
+        }
+
+        function exportResults() {
+            let report = 'CARPET AREA MEASUREMENT REPORT\n';
+            report += '================================\n\n';
+            report += 'ROOM DETAILS:\n';
+            report += '-'.repeat(50) + '\n';
+
+            rooms.forEach((room, index) => {
+                report += `${index + 1}. ${room.name}\n`;
+                report += `   Dimensions: ${room.length}m × ${room.width}m\n`;
+                report += `   Area: ${room.area} sq.m\n\n`;
+            });
+
+            const totalArea = rooms.reduce((sum, room) => sum + parseFloat(room.area), 0).toFixed(2);
+            const avgArea = (totalArea / rooms.length).toFixed(2);
+
+            report += '-'.repeat(50) + '\n';
+            report += `TOTAL CARPET AREA: ${totalArea} sq.m\n`;
+            report += `Number of Rooms: ${rooms.length}\n`;
+            report += `Average Room Size: ${avgArea} sq.m\n`;
+            report += `Generated: ${new Date().toLocaleString()}\n`;
+
+            // Download as text file
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(report));
+            element.setAttribute('download', 'carpet-area-report.txt');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+
+            showSuccess('✅ Report exported successfully!');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+
+        function showSuccess(msg) {
+            const successDiv = document.getElementById('successMsg');
+            successDiv.textContent = msg;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 5000);
+        }
+    </script>
+</body>
+</html>
